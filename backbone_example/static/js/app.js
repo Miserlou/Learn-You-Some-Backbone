@@ -69,6 +69,26 @@
         }                                        
     });
 
+    window.CounterView = Backbone.View.extend({
+        tagName: 'span',
+        className: 'counter',
+
+        events: {
+            //'click .permalink': 'navigate'           
+        },
+
+        initialize: function(){
+            this.collection.bind('reset', this.render, this);
+            this.collection.bind('add', this.render, this);
+            this.render();
+        },
+
+        render: function(){
+            $(this.el).html(this.collection.size());
+            return this;
+        }                                        
+    });
+
 
     window.DetailApp = Backbone.View.extend({
         events: {
@@ -154,12 +174,18 @@
                 collection: this.collection,
                 el: this.$('#tweets')
             });
-            list.addAll();
-            list.bind('all', this.rethrow, this);
+
             new InputView({
                 collection: this.collection,
                 el: this.$('#input')
             });
+            new CounterView({
+                collection: this.collection,
+                el: this.$('#counter')
+            });
+
+            list.addAll();
+            list.bind('all', this.rethrow, this);
         }        
     });
 
@@ -167,7 +193,8 @@
     window.Router = Backbone.Router.extend({
         routes: {
             '': 'list',
-            ':id/': 'detail'
+            ':id/': 'detail',
+//            '': 'counter'
         },
 
         navigate_to: function(model){
@@ -177,7 +204,9 @@
 
         detail: function(){},
 
-        list: function(){}
+        list: function(){},
+
+        counter: function(){}
     });
 
     $(function(){
@@ -188,14 +217,17 @@
             el: $("#app"),
             collection: app.tweets
         });
+
         app.detail = new DetailApp({
             el: $("#app")
         });
+
         app.router.bind('route:list', function(){
             app.tweets.maybeFetch({
                 success: _.bind(app.list.render, app.list)                
             });
         });
+
         app.router.bind('route:detail', function(id){
             app.tweets.getOrFetch(app.tweets.urlRoot + id + '/', {
                 success: function(model){
